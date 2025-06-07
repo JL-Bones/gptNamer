@@ -1,0 +1,18 @@
+[Unit]
+Description=Media File Organizer Service
+After=network.target
+
+[Service]
+Type=simple
+User=server
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="SCRIPT_DIR=/mnt/10TBDrive/gptNamer"
+Environment="PYTHONPATH=/mnt/10TBDrive/gptNamer"
+EnvironmentFile=/mnt/10TBDrive/gptNamer/.env
+WorkingDirectory=/mnt/10TBDrive/gptNamer
+ExecStart=/bin/bash /mnt/10TBDrive/gptNamer/run.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
