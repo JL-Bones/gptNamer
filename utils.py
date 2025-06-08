@@ -23,8 +23,12 @@ def get_file_type(file_path):
 
 def sanitize_filename(filename):
     """Remove or replace special characters that could cause filesystem issues."""
-    # Replace invalid characters with underscores
-    sanitized = re.sub(r'[<>:"/\\|?*]', '_', filename)
+    # Remove invalid characters entirely
+    sanitized = re.sub(r'[<>:"/\\|?*]', '', filename)
+    # Remove unnecessary underscores
+    sanitized = re.sub(r'_+', '_', sanitized)
+    # Remove leading and trailing underscores
+    sanitized = sanitized.strip('_')
     # Remove multiple spaces
     sanitized = re.sub(r'\s+', ' ', sanitized)
     return sanitized.strip()

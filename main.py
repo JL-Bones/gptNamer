@@ -67,36 +67,11 @@ class MediaFileHandler(FileSystemEventHandler):
 
     def analyze_franchise(self, movie_title, year):
         """Analyze if a movie belongs to a franchise."""
-        try:
-            messages = [
-                {"role": "system", "content": self.prompts['franchise_detection_prompt']},
-                {"role": "user", "content": f"Movie: {movie_title}\nYear: {year}"}
-            ]
-            
-            response = self.client.chat.completions.create(
-                model=config.OPENAI_MODEL,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=150,
-                response_format={ "type": "json_object" }
-            )
-            
-            result = json.loads(response.choices[0].message.content)
-            return result
-        except Exception as e:
-            logging.error(f"Error analyzing franchise for {movie_title}: {str(e)}")
-            return None
+        pass  # Franchise analysis removed
 
     def is_extra_content(self, filename, parent_folders):
         """Check if the file is likely extra content."""
-        extra_keywords = [
-            'behind the scenes', 'bts', 'making of', 'deleted scenes',
-            'extra', 'extras', 'special features', 'bonus', 'interview',
-            'featurette', 'commentary', 'blooper', 'gag reel'
-        ]
-        
-        search_text = (filename + ' ' + parent_folders).lower()
-        return any(keyword in search_text for keyword in extra_keywords)
+        pass  # Extra content analysis removed
 
     def analyze_book(self, file_path, is_audiobook=False):
         """Analyze book or audiobook files using OpenAI API."""
@@ -241,21 +216,13 @@ class MediaFileHandler(FileSystemEventHandler):
                     # Handle movie extras
                     related_title = result.get('related_title', movie_title)
                     extra_type = result.get('extra_type', 'Bonus Content')
-                    franchise_info = self.analyze_franchise(related_title, year)
                     
-                    if franchise_info and franchise_info.get('franchise_name'):
-                        base_dir = Path(config.EXTRAS_MOVIES_DIR) / sanitize_filename(franchise_info['franchise_sub_dir'])
-                    else:
-                        base_dir = Path(config.EXTRAS_MOVIES_DIR)
+                    base_dir = config.MOVIES_DIR  # All movies in a single directory
                     
                     new_filename = f"{related_title} ({year}) - {extra_type}{file_path.suffix}"
                 else:
                     # Regular movie
-                    franchise_info = self.analyze_franchise(movie_title, year)
-                    if franchise_info and franchise_info.get('franchise_name'):
-                        base_dir = config.MOVIES_DIR / sanitize_filename(franchise_info['franchise_sub_dir'])
-                    else:
-                        base_dir = config.MOVIES_DIR
+                    base_dir = config.MOVIES_DIR
                     
                     new_filename = f"{movie_title} ({year}){file_path.suffix}" if year else f"{movie_title}{file_path.suffix}"
                 
@@ -263,7 +230,6 @@ class MediaFileHandler(FileSystemEventHandler):
                     'filename': sanitize_filename(new_filename),
                     'directory': base_dir,
                     'title': movie_title,
-                    'franchise_info': franchise_info if not is_extra else None,
                     'is_extra': is_extra
                 }
             
@@ -368,7 +334,7 @@ class MediaFileHandler(FileSystemEventHandler):
             logging.error(f"Error processing subtitles for {video_path}: {str(e)}")
 
     def process_file(self, file_path):
-        """Process a new file and organize it appropriately."""
+        """Process a media file and organize it."""
         try:
             # Check if file still exists and is not in the destination directory
             if not file_path.exists() or str(file_path).startswith(str(config.DEST_BASE_DIR)):
@@ -376,7 +342,6 @@ class MediaFileHandler(FileSystemEventHandler):
 
             logging.info(f"Processing new file: {file_path}")
             
-            # Get media type
             media_type = get_media_type(file_path, file_path.name)
             
             if media_type == 'unknown':
